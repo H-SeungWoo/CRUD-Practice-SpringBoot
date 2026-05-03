@@ -78,6 +78,14 @@ public class PostController {
         return "redirect:/posts/" + id;
     }
 
+    @PostMapping("/posts/{id}/delete")
+    public String delete(@PathVariable Long id) {
+        Post post = findPostById(id);
+
+        posts.remove(post);
+
+        return "redirect:/posts";
+    }
 
     private Post findPostById(Long id) {
         Post foundPost = null;
