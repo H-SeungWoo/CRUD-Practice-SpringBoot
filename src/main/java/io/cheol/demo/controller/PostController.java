@@ -1,6 +1,7 @@
 package io.cheol.demo.controller;
 
 import io.cheol.demo.domain.Post;
+import io.cheol.demo.repository.PostRepository;
 import jakarta.websocket.server.PathParam;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -14,17 +15,16 @@ import java.util.List;
 @Controller
 public class PostController {
 
-    private final List<Post> posts = new ArrayList<>();
-    private Long sequence = 1L;
+    private final PostRepository postRepository;
 
-    public PostController() {
-        posts.add(new Post(sequence++, "첫 번째 게시글", "첫 번째 게시글 내용입니다."));
-        posts.add(new Post(sequence++, "두 번째 게시글", "두 번째 게시글 내용입니다."));
-        posts.add(new Post(sequence++, "세 번째 게시글", "세 번째 게시글 내용입니다."));
+    public PostController(PostRepository postRepository) {
+        this.postRepository = postRepository;
     }
 
     @GetMapping("/posts")
     public String list(Model model) {
+        List<Post> posts = postRepository.findAll();
+
         model.addAttribute("posts", posts);
 
         return "posts/list";
@@ -40,8 +40,7 @@ public class PostController {
             @RequestParam String title,
             @RequestParam String content
     ){
-        Post post = new Post(sequence++, title, content);
-        posts.add(post);
+        Post post = postRepository.save(title, content);
 
         return "redirect:/posts/" + post.getId();
     }
@@ -49,7 +48,7 @@ public class PostController {
     @GetMapping("/posts/{id}")
     public String detail(@PathVariable Long id, Model model) {
 
-            Post post = findPostById(id);
+            Post post = postRepository.findById(id);
 
             model.addAttribute("post", post);
 
@@ -59,7 +58,7 @@ public class PostController {
     @GetMapping("/posts/{id}/edit")
     public String editForm(@PathVariable Long id, Model model) {
 
-        Post post = findPostById(id);
+        Post post = postRepository.findById(id);
 
         model.addAttribute("post", post);
 
@@ -72,7 +71,7 @@ public class PostController {
             @RequestParam String title,
             @RequestParam String content
     ){
-        Post post = findPostById(id);
+        Post post = postRepository.findById(id);
         post.update(title, content);
 
         return "redirect:/posts/" + id;
@@ -80,28 +79,11 @@ public class PostController {
 
     @PostMapping("/posts/{id}/delete")
     public String delete(@PathVariable Long id) {
-        Post post = findPostById(id);
+        Post post = postRepository.findById(id);
 
-        posts.remove(post);
+        postRepository.delete(post);
 
         return "redirect:/posts";
-    }
-
-    private Post findPostById(Long id) {
-        Post foundPost = null;
-
-        for (Post post : posts) {
-            if (post.getId().equals(id)) {
-                foundPost = post;
-                break;
-            }
-        }
-
-        if (foundPost == null) {
-            throw new IllegalArgumentException("게시글을 찾을 수 없습니다. id=" + id);
-        }
-
-        return foundPost;
     }
 
 
